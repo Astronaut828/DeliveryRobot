@@ -181,7 +181,7 @@ function goalOrientedRobot({ place, parcels }, route) {
 Breadth-First Search (BFS) algorithm */
 function calculateDistance(graph, from, to) {
   let visited = new Set();
-  let queue = [[from, 0]]; // Each element in the queue is an array [node, distance]
+  let queue = [[from, 0]];
 
   while (queue.length > 0) {
     let [current, distance] = queue.shift();
@@ -199,7 +199,7 @@ function calculateDistance(graph, from, to) {
     }
   }
 
-  return Infinity; // Return Infinity if there is no path from 'from' to 'to'
+  return Infinity;
 }
 
 function findClosestParcel(currentLocation, parcels, graph) {
