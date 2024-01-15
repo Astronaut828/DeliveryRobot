@@ -68,9 +68,9 @@ let first = new WorldState("Post Office", [
 ]);
 
 let next = first.move("Alice's House");
-// console.log(next.place); // → Alice's House
-// console.log(next.parcels); // → []
-// console.log(first.place); // → Post Office
+console.log(next.place); // → Alice's House
+console.log(next.parcels); // → []
+console.log(first.place); // → Post Office
 /* The move causes the parcel to be delivered, and this is reflected in the next state. 
 But the initial state still describes the situation where the robot is at the post oﬀice and the parcel is undelivered. */
 
@@ -82,13 +82,13 @@ but only after picking up the parcel.*/
 function runRobot(state, robot, memory) {
   for (let turn = 0; ; turn++) {
     if (state.parcels.length == 0) {
-      // console.log(`${robot.name} done in ${turn} turns`);
+      console.log(`${robot.name} done in ${turn} turns`);
       return turn;
     }
     let action = robot(state, memory);
     state = state.move(action.direction);
     memory = action.memory;
-    // console.log(`Moved to ${action.direction}`);
+    console.log(`Moved to ${action.direction}`);
   }
 }
 
@@ -116,7 +116,7 @@ WorldState.random = function (parcelCount = 5) {
   return new WorldState("Post Office", parcels);
 };
 
-// runRobot(WorldState.random(), randomRobot);
+runRobot(WorldState.random(), randomRobot);
 
 // The mail truck's route
 /* If we find a route that passes all places in the village, the robot could run that route twice, 
@@ -144,7 +144,7 @@ function routeRobot(state, memory) {
   return { direction: memory[0], memory: memory.slice(1) };
 }
 
-// runRobot(WorldState.random(), routeRobot, (memory = []));
+runRobot(WorldState.random(), routeRobot, (memory = []));
 
 // Pathfinding
 /* Finding the shortest route. Approach: “grow” routes from the starting point, 
@@ -174,31 +174,34 @@ function goalOrientedRobot({ place, parcels }, route) {
   return { direction: route[0], memory: route.slice(1) };
 }
 
-// runRobot(WorldState.random(), goalOrientedRobot, (memory = []));
+runRobot(WorldState.random(), goalOrientedRobot, (memory = []));
 
 // Personal setup
 /* Creating a robot that is intended to move more efficiently than the goalOrientedRobot. 
 Breadth-First Search (BFS) algorithm */
 function calculateDistance(graph, from, to) {
+  // Initialize a set to keep track of visited nodes to avoid revisiting them.
   let visited = new Set();
+  // Initialize a queue for BFS, storing nodes along with their distance from the 'from' node.
   let queue = [[from, 0]];
 
   while (queue.length > 0) {
     let [current, distance] = queue.shift();
-
+    // If the current node is the target node, return the distance to it.
     if (current === to) {
       return distance;
     }
-
+    // Mark the current node as visited.
     visited.add(current);
-
+    // Iterate over all neighbors (directly connected nodes) of the current node.
     for (let neighbor of graph[current]) {
+      // If the neighbor has not been visited, add it to the queue with an incremented distance.
       if (!visited.has(neighbor)) {
         queue.push([neighbor, distance + 1]);
       }
     }
   }
-
+  // If the target node is not reachable from the start node, return Infinity.
   return Infinity;
 }
 
@@ -209,14 +212,15 @@ function findClosestParcel(currentLocation, parcels, graph) {
   for (let parcel of parcels) {
     let target =
       parcel.place !== currentLocation ? parcel.place : parcel.address;
+    // Calculate the distance to target.
     let distance = calculateDistance(graph, currentLocation, target);
-
+    // If this distance is shorter than the shortest distance found so far,
+    // update the shortestDistance and mark this parcel as the closest.
     if (distance < shortestDistance) {
       shortestDistance = distance;
       closestParcel = parcel;
     }
   }
-
   return closestParcel;
 }
 
@@ -256,3 +260,76 @@ let comparisonResult = compareRobots(goalOrientedRobot, quicknessRobot);
 console.log(
   `${comparisonResult.robot1.name} average turns: ${comparisonResult.robot1.averageTurns} \n${comparisonResult.robot2.name} average turns: ${comparisonResult.robot2.averageTurns}`
 );
+
+// Persistent group - implementation of a immutable data structure
+/* Write a new class PGroup, which stores a set of values.
+It should have add, delete, and has methods.
+Its add method, however, should return a new PGroup instance with the given member added and leave the old one unchanged.
+Similarly, delete creates a new instance without a given member. 
+*/
+class PGroup {
+  constructor() {
+    this.group = [];
+  }
+  add(x) {
+    if (this.group.indexOf(x) === -1) {
+      let newGroup = new PGroup();
+      newGroup.group.push(...this.group, x);
+      return newGroup;
+    }
+    return this;
+  }
+  delete(x) {
+    let index = this.group.indexOf(x);
+    if (index !== -1) {
+      let newGroup = new PGroup();
+      newGroup.group.push(...this.group);
+      newGroup.group.splice(index, 1);
+      return newGroup;
+    }
+    return this;
+  }
+  has(x) {
+    return this.group.includes(x);
+  }
+  static from(arr) {
+    let newGroup = new PGroup();
+    for (let elem in arr) {
+      newGroup.add(arr[elem]);
+    }
+    return newGroup;
+  }
+  static get empty() {
+    return new PGroup();
+  }
+}
+
+// Creating an initial empty persistent group
+let emptyGroup = new PGroup();
+
+// Adding "Apple" to the empty group, resulting in a new group with "Apple"
+let groupWithApple = emptyGroup.add("Apple");
+
+// Adding "Orange" to the group that already has "Apple", resulting in a new group with both "Apple" and "Orange"
+let groupWithAppleAndOrange = groupWithApple.add("Orange");
+
+// Logging the groups after additions
+console.log("Empty Group:", emptyGroup); // Should be empty
+console.log("Group with Apple:", groupWithApple); // Should contain only 'Apple'
+console.log("Group with Apple and Orange:", groupWithAppleAndOrange); // Should contain both 'Apple' and 'Orange'
+
+// Deleting "Apple" from the group that has both "Apple" and "Orange", resulting in a new group with only "Orange"
+let groupWithOrange = groupWithAppleAndOrange.delete("Apple");
+
+// Logging the groups after deletion
+console.log("Empty Group after deletion:", emptyGroup); // Should still be empty
+console.log("Group with Apple after deletion:", groupWithApple); // Should still contain only 'Apple'
+console.log(
+  "Group with Apple and Orange after deletion:",
+  groupWithAppleAndOrange
+); // Should still contain both 'Apple' and 'Orange'
+console.log("Group with Orange (Apple deleted):", groupWithOrange); // Should contain only 'Orange'
+
+// Calling empty on the PGroup class to get an empty group
+let emptyGroup2 = PGroup.empty;
+console.log("Empty Group:", emptyGroup2); // Should be empty
