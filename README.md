@@ -17,5 +17,3 @@ In the "project" chapters of the book, the focus shifts from theoretical concept
 ### The Automaton Project
 
 In this chapter, the project involves building an automaton - a small program that performs tasks in a virtual world. Our specific task is to create a mail-delivery robot. This robot's function is to navigate a virtual environment, picking up and delivering parcels.
-
-
